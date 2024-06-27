@@ -30,11 +30,9 @@ if (isset($_POST['btnsave'])) {
 
 	if ($stmt->execute()) {
 		// Set success message
-		$message = '<div class="alert alert-success" role="alert">Record saved successfully</div>';
-		// JavaScript alert for success
-		echo '<script>alert("Record saved successfully");</script>';
-		// Redirect to prevent form resubmission on page refresh
-		header("Location: " . $_SERVER['PHP_SELF']);
+		$message = '<div class="alert alert-success" role="alert">អ្នកបានបញ្ចូលជោជ័យ</div>';
+		// Redirect back to navbar.php
+		header("Location: navbar.php");
 		exit();
 	} else {
 		// Set error message
@@ -42,28 +40,32 @@ if (isset($_POST['btnsave'])) {
 	}
 	$stmt->close();
 }
-
+// Remaining PHP code for delete, edit, and display table goes here
 if (isset($_GET['delete'])) {
 	$id = $_GET['delete'];
-	$sql = "DELETE FROM customer_orders WHERE id=$id";
-	if ($conn->query($sql)) {
-		// Success message for delete
-		echo '<script>alert("Record deleted successfully");</script>';
-		// Redirect to prevent form resubmission on page refresh
-		header("Location: " . $_SERVER['PHP_SELF']);
-		exit();
-	} else {
-		// Error handling for delete
-		echo '<script>alert("Error deleting record: ' . $conn->error . '");</script>';
-	}
-}
+	$sql = "DELETE FROM customer_orders WHERE id=?";
+	$stmt = $conn->prepare($sql);
+	$stmt->bind_param("i", $id);
 
+	if ($stmt->execute()) {
+		// Delete success message
+		$message = '<div class="alert alert-success" role="alert">បានលុបប្រភេទទិន្នន័យដោយជោគជ័យ</div>';
+	} else {
+		// Set error message
+		$message = '<div class="alert alert-danger" role="alert">មានបញ្ហាក្នុងការលុប: ' . $stmt->error . '</div>';
+	}
+	$stmt->close();
+}
 if (isset($_GET['edit'])) {
 	$id = $_GET['edit'];
 	// Retrieve the record's data
-	$sql = "SELECT * FROM customer_orders WHERE id=$id";
-	$result = $conn->query($sql);
+	$sql = "SELECT * FROM customer_orders WHERE id=?";
+	$stmt = $conn->prepare($sql);
+	$stmt->bind_param("i", $id);
+	$stmt->execute();
+	$result = $stmt->get_result();
 	$record = $result->fetch_assoc();
+	$stmt->close();
 }
 ?>
 
@@ -136,11 +138,12 @@ if (isset($_GET['edit'])) {
     <div class="row p-2">
         <div class="col-sm-1"></div>
         <div class="col-sm-10 rounded-4 p-3 border">
-			<?php echo $message; ?>
+            <div class="alert  text-center" role="alert">
+	            <?php echo $message; ?>
+            </div>
+
             <form class="row" method="POST">
-                <div class="alert alert-success text-center" role="alert">
-                    អ្នកបានបញ្ចូលជោជ័យ
-                </div>
+
                 <input type="hidden" name="record_id" value="<?php echo isset($record['id']) ? $record['id'] : ''; ?>">
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="namecustomer">ឈ្មោះអតិថិជន:</label>
@@ -213,7 +216,7 @@ if (isset($_GET['edit'])) {
 
 	if ($result->num_rows > 0) {
 		echo '<div class="table-responsive">';
-		echo '<table class="table table-striped table-hover table-custom">';
+		echo '<table class="table table-striped table-hover table-custom border shadow">';
 		echo '<thead class="table-primary">';
 		echo '<tr>';
 		echo '<th scope="col">លេខរៀង</th>';
@@ -268,9 +271,12 @@ if (isset($_GET['edit'])) {
 </html>
 
 <script>
-    function hidtable() {
-        var tables = document.getElementById("table");
-        tables.style.display = "none";
+    function clearFormInputs() {
+        document.getElementById("record_form").reset();
     }
+    // Call the clearFormInputs function on page load
+    window.onload = function() {
+        clearFormInputs();
+    };
 </script>
 

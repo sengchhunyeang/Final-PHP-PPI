@@ -5,6 +5,7 @@ $message = ""; // Initialize an empty message variable
 
 if (isset($_POST['btnsave'])) {
 	// Retrieve form data
+	$record_id = $_POST['record_id'];
 	$namecustomer = $_POST['namecustomer'];
 	$phone_number = $_POST['PhoneNumber'];
 	$quantity = $_POST['Quantity'];
@@ -17,21 +18,52 @@ if (isset($_POST['btnsave'])) {
 	$sell_status = $_POST['Sell'];
 	$delivery_details = $_POST['Delivery'];
 
-	// SQL query to insert data into customer_orders table
-	$sql = "INSERT INTO customer_orders (name_customer, phone_number, quantity, price, order_product, location, order_date, take_date, payment_status, sell_status, delivery_details) 
-            VALUES ('$namecustomer', '$phone_number', '$quantity', '$price', '$order_product', '$location', '$order_date', '$take_date', '$payment_status', '$sell_status', '$delivery_details')";
+	if (!empty($record_id)) {
+		// Update existing record
+		$stmt = $conn->prepare("UPDATE customer_orders SET name_customer=?, phone_number=?, quantity=?, price=?, order_product=?, location=?, order_date=?, take_date=?, payment_status=?, sell_status=?, delivery_details=? WHERE id=?");
+		$stmt->bind_param("ssissssssssi", $namecustomer, $phone_number, $quantity, $price, $order_product, $location, $order_date, $take_date, $payment_status, $sell_status, $delivery_details, $record_id);
+	} else {
+		// Insert new record
+		$stmt = $conn->prepare("INSERT INTO customer_orders (name_customer, phone_number, quantity, price, order_product, location, order_date, take_date, payment_status, sell_status, delivery_details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		$stmt->bind_param("ssissssssss", $namecustomer, $phone_number, $quantity, $price, $order_product, $location, $order_date, $take_date, $payment_status, $sell_status, $delivery_details);
+	}
 
-	if ($conn->query($sql) === true) {
+	if ($stmt->execute()) {
 		// Set success message
-		$message = '<div class="alert alert-success" role="alert">New record created successfully</div>';
-
+		$message = '<div class="alert alert-success" role="alert">Record saved successfully</div>';
+		// JavaScript alert for success
+		echo '<script>alert("Record saved successfully");</script>';
 		// Redirect to prevent form resubmission on page refresh
-		header("Location: ".$_SERVER['PHP_SELF']);
+		header("Location: " . $_SERVER['PHP_SELF']);
 		exit();
 	} else {
 		// Set error message
-		$message = '<div class="alert alert-danger" role="alert">Error: ' . $sql . '<br>' . $conn->error . '</div>';
+		$message = '<div class="alert alert-danger" role="alert">Error: ' . $stmt->error . '</div>';
 	}
+	$stmt->close();
+}
+
+if (isset($_GET['delete'])) {
+	$id = $_GET['delete'];
+	$sql = "DELETE FROM customer_orders WHERE id=$id";
+	if ($conn->query($sql)) {
+		// Success message for delete
+		echo '<script>alert("Record deleted successfully");</script>';
+		// Redirect to prevent form resubmission on page refresh
+		header("Location: " . $_SERVER['PHP_SELF']);
+		exit();
+	} else {
+		// Error handling for delete
+		echo '<script>alert("Error deleting record: ' . $conn->error . '");</script>';
+	}
+}
+
+if (isset($_GET['edit'])) {
+	$id = $_GET['edit'];
+	// Retrieve the record's data
+	$sql = "SELECT * FROM customer_orders WHERE id=$id";
+	$result = $conn->query($sql);
+	$record = $result->fetch_assoc();
 }
 ?>
 
@@ -104,129 +136,132 @@ if (isset($_POST['btnsave'])) {
     <div class="row p-2">
         <div class="col-sm-1"></div>
         <div class="col-sm-10 rounded-4 p-3 border">
-			<?php echo $message; ?> <!-- Display success/error message -->
+			<?php echo $message; ?>
             <form class="row" method="POST">
+                <div class="alert alert-success text-center" role="alert">
+                    អ្នកបានបញ្ចូលជោជ័យ
+                </div>
+                <input type="hidden" name="record_id" value="<?php echo isset($record['id']) ? $record['id'] : ''; ?>">
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="namecustomer">ឈ្មោះអតិថិជន:</label>
-                    <input type="text" name="namecustomer" id="namecustomer" class="form-control" required>
+                    <input type="text" name="namecustomer" id="namecustomer" class="form-control" required value="<?php echo isset($record['name_customer']) ? $record['name_customer'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="PhoneNumber">លេខទូរស័ព្ទ:</label>
-                    <input type="number" name="PhoneNumber" id="PhoneNumber" class="form-control" required>
+                    <input type="number" name="PhoneNumber" id="PhoneNumber" class="form-control" required value="<?php echo isset($record['phone_number']) ? $record['phone_number'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Quantity">បរិមាណ:</label>
-                    <input type="number" name="Quantity" id="Quantity" class="form-control" required>
+                    <input type="number" name="Quantity" id="Quantity" class="form-control" required value="<?php echo isset($record['quantity']) ? $record['quantity'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Price">តម្លៃ:</label>
-                    <input type="number" name="Price" id="Price" class="form-control" required>
+                    <input type="number" name="Price" id="Price" class="form-control" required value="<?php echo isset($record['price']) ? $record['price'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="OrderProduct">ផលិតផលកុម្មង់:</label>
                     <select id="OrderProduct" name="OrderProduct" class="form-select form-control" required>
-                        <option value="ផ្លែមៀន">ផ្លែមៀន</option>
-                        <option value="ផ្លែទទឹម">ផ្លែទទឹម</option>
-                        <option value="ផ្លែក្រូច">ផ្លែក្រូច</option>
-                        <option value="ផ្លែម្នាស់">ផ្លែម្នាស់</option>
-                        <option value="ផ្លែប៉ោម">ផ្លែប៉ោម</option>
+                        <option value="ផ្លែមៀន" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែមៀន') ? 'selected' : ''; ?>>ផ្លែមៀន</option>
+                        <option value="ផ្លែទទឹម" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែទទឹម') ? 'selected' : ''; ?>>ផ្លែទទឹម</option>
+                        <option value="ផ្លែក្រូច" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែក្រូច') ? 'selected' : ''; ?>>ផ្លែក្រូច</option>
+                        <option value="ផ្លែម្នាស់" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែម្នាស់') ? 'selected' : ''; ?>>ផ្លែម្នាស់</option>
+                        <option value="ផ្លែប៉ោម" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែប៉ោម') ? 'selected' : ''; ?>>ផ្លែប៉ោម</option>
                     </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Location">ទីតាំង:</label>
-                    <input type="text" name="Location" id="Location" class="form-control" required>
+                    <input type="text" name="Location" id="Location" class="form-control" required value="<?php echo isset($record['location']) ? $record['location'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="OrderDate">កាលបរិច្ឆេទបញ្ជា:</label>
-                    <input type="date" name="OrderDate" id="OrderDate" class="form-control" required>
+                    <input type="date" name="OrderDate" id="OrderDate" class="form-control" required value="<?php echo isset($record['order_date']) ? $record['order_date'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="TakeDate">កាលបរិច្ឆេទទទួល:</label>
-                    <input type="date" name="TakeDate" id="TakeDate" class="form-control" required>
+                    <input type="date" name="TakeDate" id="TakeDate" class="form-control" required value="<?php echo isset($record['take_date']) ? $record['take_date'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Payment">ស្ថានភាពបង់ប្រាក់:</label>
                     <select id="Payment" name="Payment" class="form-select form-control" required>
-                        <option value="Not Paid">មិនទាន់បានបង់ប្រាក់</option>
-                        <option value="Paid">បានបង់ប្រាក់</option>
+                        <option value="Not Paid" <?php echo (isset($record['payment_status']) && $record['payment_status'] == 'Not Paid') ? 'selected' : ''; ?>>មិនទាន់បានបង់ប្រាក់</option>
+                        <option value="Paid" <?php echo (isset($record['payment_status']) && $record['payment_status'] == 'Paid') ? 'selected' : ''; ?>>បានបង់ប្រាក់</option>
                     </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Sell">ស្ថានភាពលក់:</label>
                     <select id="Sell" name="Sell" class="form-select form-control" required>
-                        <option value="In Order">នៅក្នុងការបញ្ជា</option>
-                        <option value="Sold Out">បានលក់អស់</option>
+                        <option value="In Order" <?php echo (isset($record['sell_status']) && $record['sell_status'] == 'In Order') ? 'selected' : ''; ?>>នៅក្នុងការបញ្ជា</option>
+                        <option value="Sold Out" <?php echo (isset($record['sell_status']) && $record['sell_status'] == 'Sold Out') ? 'selected' : ''; ?>>បានលក់អស់</option>
                     </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Delivery">ការដឹកជញ្ជូន:</label>
-                    <input type="text" name="Delivery" id="Delivery" class="form-control" required>
+                    <input type="text" name="Delivery" id="Delivery" class="form-control" required value="<?php echo isset($record['delivery_details']) ? $record['delivery_details'] : ''; ?>">
                 </div>
                 <div class="col-12 mt-3 p-2 justify-content-md-start">
-                    <button type="submit" name="btnsave" id="btnsave" class="btn  btn-primary mt-3 mb-3">រក្សាទុក
-                    </button>
-                    <button type="reset" name="btnreset" value="Clear" onclick="hidtable();" id="btnreset"
-                            class="btn btn-danger mt-3 mb-3">សម្អាត
-                    </button>
+                    <button type="submit" name="btnsave" id="btnsave" class="btn  btn-primary mt-3 mb-3">រក្សាទុក</button>
+                    <button type="reset" name="btnreset" value="Clear" id="btnreset" class="btn btn-danger mt-3 mb-3">សម្អាត</button>
                 </div>
             </form>
-
-            <!-- Display Table of Orders -->
-			<?php
-			// SQL query to retrieve all records from customer_orders table
-			$sql = "SELECT * FROM customer_orders";
-			$result = $conn->query($sql);
-
-			if ($result->num_rows > 0) {
-				echo '<div class="table-responsive">';
-				echo '<table class="table table-striped table-hover">';
-				echo '<thead class="table-dark">';
-				echo '<tr>';
-				echo '<th  scope="col">លេខរៀង</th>';
-				echo '<th scope="col">ឈ្មោះអតិថិជន</th>';
-				echo '<th scope="col">លេខទូរស័ព្ទ</th>';
-				echo '<th scope="col">បរិមាណ</th>';
-				echo '<th scope="col">តម្លៃ</th>';
-				echo '<th scope="col">ផលិតផលកុម្មង់</th>';
-				echo '<th scope="col">ទីតាំង</th>';
-				echo '<th scope="col">កាលបរិច្ឆេទបញ្ជា</th>';
-				echo '<th scope="col">កាលបរិច្ឆេទទទួល</th>';
-				echo '<th scope="col">ស្ថានភាពបង់ប្រាក់</th>';
-				echo '<th scope="col">ស្ថានភាពលក់</th>';
-				echo '<th scope="col">ការដឹកជញ្ជូន</th>';
-				echo '</tr>';
-				echo '</thead>';
-				echo '<tbody>';
-
-				// Output data of each row
-				while ($row = $result->fetch_assoc()) {
-					echo '<tr>';
-					echo '<td>' . $row['id'] . '</td>';
-					echo '<td>' . $row['name_customer'] . '</td>';
-					echo '<td>' . $row['phone_number'] . '</td>';
-					echo '<td>' . $row['quantity'] . '</td>';
-					echo '<td>' . $row['price'] . '</td>';
-					echo '<td>' . $row['order_product'] . '</td>';
-					echo '<td>' . $row['location'] . '</td>';
-					echo '<td>' . $row['order_date'] . '</td>';
-					echo '<td>' . $row['take_date'] . '</td>';
-					echo '<td>' . $row['payment_status'] . '</td>';
-					echo '<td>' . $row['sell_status'] . '</td>';
-					echo '<td>' . $row['delivery_details'] . '</td>';
-					echo '</tr>';
-				}
-				echo '</tbody>';
-				echo '</table>';
-				echo '</div>'; // End table-responsive
-			} else {
-				echo '<p>No records found</p>';
-			}
-
-			$conn->close();
-			?>
         </div>
-        <div class="col-sm-1"></div>
     </div>
+    <!-- Display Table of Orders -->
+	<?php
+	// SQL query to retrieve all records from customer_orders table
+	$sql = "SELECT * FROM customer_orders";
+	$result = $conn->query($sql);
+
+	if ($result->num_rows > 0) {
+		echo '<div class="table-responsive">';
+		echo '<table class="table table-striped table-hover table-custom">';
+		echo '<thead class="table-primary">';
+		echo '<tr>';
+		echo '<th scope="col">លេខរៀង</th>';
+		echo '<th scope="col">ឈ្មោះអតិថិជន</th>';
+		echo '<th scope="col">លេខទូរស័ព្ទ</th>';
+		echo '<th scope="col">បរិមាណ</th>';
+		echo '<th scope="col">តម្លៃ</th>';
+		echo '<th scope="col">ផលិតផលកុម្មង់</th>';
+		echo '<th scope="col">ទីតាំង</th>';
+		echo '<th scope="col">កាលបរិច្ឆេទបញ្ជា</th>';
+		echo '<th scope="col">កាលបរិច្ឆេទទទួល</th>';
+		echo '<th scope="col">ស្ថានភាពបង់ប្រាក់</th>';
+		echo '<th scope="col">ស្ថានភាពលក់</th>';
+		echo '<th scope="col">ការដឹកជញ្ជូន</th>';
+		echo '<th scope="col">ចំណាំ</th>';
+		echo '<th scope="col">កំណត់ចំណាំ</th>';
+		echo '</tr>';
+		echo '</thead>';
+		echo '<tbody>';
+
+		// Output data of each row
+		while ($row = $result->fetch_assoc()) {
+			echo '<tr>';
+			echo '<td>' . $row['id'] . '</td>';
+			echo '<td>' . $row['name_customer'] . '</td>';
+			echo '<td>' . $row['phone_number'] . '</td>';
+			echo '<td>' . $row['quantity'] . '</td>';
+			echo '<td>' . $row['price'] . '</td>';
+			echo '<td>' . $row['order_product'] . '</td>';
+			echo '<td>' . $row['location'] . '</td>';
+			echo '<td>' . $row['order_date'] . '</td>';
+			echo '<td>' . $row['take_date'] . '</td>';
+			echo '<td>' . $row['payment_status'] . '</td>';
+			echo '<td>' . $row['sell_status'] . '</td>';
+			echo '<td>' . $row['delivery_details'] . '</td>';
+			echo '<td><a class=" btn btn-danger" href="?delete=' . $row['id'] . '">Delete</a></td>';
+			echo '<td><a class=" btn btn-warning" href="?edit=' . $row['id'] . '">Update</a></td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '</table>';
+		echo '</div>'; // End table-responsive
+	} else {
+		echo '<p>No records found</p>';
+	}
+
+	$conn->close();
+	?>
 </div>
 <?php include_once('link-js.php'); ?>
 </body>

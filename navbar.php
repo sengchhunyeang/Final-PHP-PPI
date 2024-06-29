@@ -21,11 +21,13 @@ if (isset($_POST['btnsave'])) {
 	if (!empty($record_id)) {
 		// Update existing record
 		$stmt = $conn->prepare("UPDATE customer_orders SET name_customer=?, phone_number=?, quantity=?, price=?, order_product=?, location=?, order_date=?, take_date=?, payment_status=?, sell_status=?, delivery_details=? WHERE id=?");
-		$stmt->bind_param("ssissssssssi", $namecustomer, $phone_number, $quantity, $price, $order_product, $location, $order_date, $take_date, $payment_status, $sell_status, $delivery_details, $record_id);
+		$stmt->bind_param("ssissssssssi", $namecustomer, $phone_number, $quantity, $price, $order_product, $location,
+			$order_date, $take_date, $payment_status, $sell_status, $delivery_details, $record_id);
 	} else {
 		// Insert new record
 		$stmt = $conn->prepare("INSERT INTO customer_orders (name_customer, phone_number, quantity, price, order_product, location, order_date, take_date, payment_status, sell_status, delivery_details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-		$stmt->bind_param("ssissssssss", $namecustomer, $phone_number, $quantity, $price, $order_product, $location, $order_date, $take_date, $payment_status, $sell_status, $delivery_details);
+		$stmt->bind_param("ssissssssss", $namecustomer, $phone_number, $quantity, $price, $order_product, $location,
+			$order_date, $take_date, $payment_status, $sell_status, $delivery_details);
 	}
 
 	if ($stmt->execute()) {
@@ -67,6 +69,23 @@ if (isset($_GET['edit'])) {
 	$record = $result->fetch_assoc();
 	$stmt->close();
 }
+$fruits = [];
+$sql = "SELECT fruit_name FROM fruit";
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+	while ($row = $result->fetch_assoc()) {
+		$fruits[] = $row['fruit_name'];
+	}
+}
+$locations = [];
+$sql = "SELECT location_name FROM location";
+$resultlocation = $conn->query($sql);
+if ($resultlocation->num_rows > 0) {
+	while ($row = $resultlocation->fetch_assoc()) {
+		$locations[] = $row['location_name'];
+	}
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -82,28 +101,34 @@ if (isset($_GET['edit'])) {
         body, input, select, label, button {
             font-family: 'Kantumruy', sans-serif;
         }
+
         /* Custom styling for better spacing and appearance */
         .form-group {
             margin-bottom: 1.5rem; /* Adjust spacing between form groups */
         }
+
         .form-label {
             font-weight: bold;
             color: #198754; /* Green color for labels */
             font-size: 1.2rem;
         }
+
         .form-control {
             font-size: 1rem;
             border-radius: 0.5rem; /* Rounded corners for form inputs */
         }
+
         .btn-primary {
             background-color: #0d6efd; /* Blue background color for buttons */
             border-color: #0d6efd;
             font-size: 1rem;
         }
+
         .btn-primary:hover {
             background-color: #0b5ed7; /* Darker blue on hover */
             border-color: #0b5ed7;
         }
+
         /* Responsive table and smaller text */
         .table-custom {
             width: 100%;
@@ -111,16 +136,19 @@ if (isset($_GET['edit'])) {
             color: #212529; /* Dark text color */
             font-size: 0.9rem; /* Smaller font size */
         }
+
         .table-custom th,
         .table-custom td {
             padding: 0.75rem;
             vertical-align: top;
             border-top: 1px solid #dee2e6; /* Lighter border color */
         }
+
         .table-custom thead th {
             vertical-align: bottom;
             border-bottom: 2px solid #dee2e6; /* Lighter border color for header */
         }
+
         .table-custom tbody + tbody {
             border-top: 2px solid #dee2e6; /* Lighter border color between rows */
         }
@@ -139,7 +167,7 @@ if (isset($_GET['edit'])) {
         <div class="col-sm-1"></div>
         <div class="col-sm-10 rounded-4 p-3 border">
             <div class="alert  text-center" role="alert">
-	            <?php echo $message; ?>
+				<?php echo $message; ?>
             </div>
 
             <form class="row" method="POST">
@@ -147,63 +175,83 @@ if (isset($_GET['edit'])) {
                 <input type="hidden" name="record_id" value="<?php echo isset($record['id']) ? $record['id'] : ''; ?>">
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="namecustomer">ឈ្មោះអតិថិជន:</label>
-                    <input type="text" name="namecustomer" id="namecustomer" class="form-control" required value="<?php echo isset($record['name_customer']) ? $record['name_customer'] : ''; ?>">
+                    <input type="text" name="namecustomer" id="namecustomer" class="form-control" required
+                           value="<?php echo isset($record['name_customer']) ? $record['name_customer'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="PhoneNumber">លេខទូរស័ព្ទ:</label>
-                    <input type="number" name="PhoneNumber" id="PhoneNumber" class="form-control" required value="<?php echo isset($record['phone_number']) ? $record['phone_number'] : ''; ?>">
+                    <input type="number" name="PhoneNumber" id="PhoneNumber" class="form-control" required
+                           value="<?php echo isset($record['phone_number']) ? $record['phone_number'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Quantity">បរិមាណ:</label>
-                    <input type="number" name="Quantity" id="Quantity" class="form-control" required value="<?php echo isset($record['quantity']) ? $record['quantity'] : ''; ?>">
+                    <input type="number" name="Quantity" id="Quantity" class="form-control" required
+                           value="<?php echo isset($record['quantity']) ? $record['quantity'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Price">តម្លៃ:</label>
-                    <input type="number" name="Price" id="Price" class="form-control" required value="<?php echo isset($record['price']) ? $record['price'] : ''; ?>">
+                    <input type="number" name="Price" id="Price" class="form-control" required
+                           value="<?php echo isset($record['price']) ? $record['price'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="OrderProduct">ផលិតផលកុម្មង់:</label>
                     <select id="OrderProduct" name="OrderProduct" class="form-select form-control" required>
-                        <option value="ផ្លែមៀន" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែមៀន') ? 'selected' : ''; ?>>ផ្លែមៀន</option>
-                        <option value="ផ្លែទទឹម" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែទទឹម') ? 'selected' : ''; ?>>ផ្លែទទឹម</option>
-                        <option value="ផ្លែក្រូច" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែក្រូច') ? 'selected' : ''; ?>>ផ្លែក្រូច</option>
-                        <option value="ផ្លែម្នាស់" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែម្នាស់') ? 'selected' : ''; ?>>ផ្លែម្នាស់</option>
-                        <option value="ផ្លែប៉ោម" <?php echo (isset($record['order_product']) && $record['order_product'] == 'ផ្លែប៉ោម') ? 'selected' : ''; ?>>ផ្លែប៉ោម</option>
+						<?php foreach ($fruits as $fruit): ?>
+                            <option value="<?php echo $fruit; ?>" <?php echo (isset($record['order_product']) && $record['order_product'] == $fruit) ? 'selected' : ''; ?>><?php echo $fruit; ?></option>
+						<?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Location">ទីតាំង:</label>
-                    <input type="text" name="Location" id="Location" class="form-control" required value="<?php echo isset($record['location']) ? $record['location'] : ''; ?>">
+                    <select id="Location" name="Location" class="form-select form-control" required>
+						<?php foreach ($locations as $location): ?>
+                            <option value="<?php echo $location; ?>" <?php echo (isset($record['location']) && $record['location'] == $location) ? 'selected' : ''; ?>><?php echo $location; ?></option>
+						<?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="OrderDate">កាលបរិច្ឆេទបញ្ជា:</label>
-                    <input type="date" name="OrderDate" id="OrderDate" class="form-control" required value="<?php echo isset($record['order_date']) ? $record['order_date'] : ''; ?>">
+                    <input type="date" name="OrderDate" id="OrderDate" class="form-control" required
+                           value="<?php echo isset($record['order_date']) ? $record['order_date'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="TakeDate">កាលបរិច្ឆេទទទួល:</label>
-                    <input type="date" name="TakeDate" id="TakeDate" class="form-control" required value="<?php echo isset($record['take_date']) ? $record['take_date'] : ''; ?>">
+                    <input type="date" name="TakeDate" id="TakeDate" class="form-control" required
+                           value="<?php echo isset($record['take_date']) ? $record['take_date'] : ''; ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Payment">ស្ថានភាពបង់ប្រាក់:</label>
                     <select id="Payment" name="Payment" class="form-select form-control" required>
-                        <option value="Not Paid" <?php echo (isset($record['payment_status']) && $record['payment_status'] == 'Not Paid') ? 'selected' : ''; ?>>មិនទាន់បានបង់ប្រាក់</option>
-                        <option value="Paid" <?php echo (isset($record['payment_status']) && $record['payment_status'] == 'Paid') ? 'selected' : ''; ?>>បានបង់ប្រាក់</option>
+                        <option value="Not Paid" <?php echo (isset($record['payment_status']) && $record['payment_status'] == 'Not Paid') ? 'selected' : ''; ?>>
+                            Not Paid
+                        </option>
+                        <option value="Paid" <?php echo (isset($record['payment_status']) && $record['payment_status'] == 'Paid') ? 'selected' : ''; ?>>
+                            Paid
+                        </option>
                     </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Sell">ស្ថានភាពលក់:</label>
                     <select id="Sell" name="Sell" class="form-select form-control" required>
-                        <option value="In Order" <?php echo (isset($record['sell_status']) && $record['sell_status'] == 'In Order') ? 'selected' : ''; ?>>នៅក្នុងការបញ្ជា</option>
-                        <option value="Sold Out" <?php echo (isset($record['sell_status']) && $record['sell_status'] == 'Sold Out') ? 'selected' : ''; ?>>បានលក់អស់</option>
+                        <option value="In Order" <?php echo (isset($record['sell_status']) && $record['sell_status'] == 'In Order') ? 'selected' : ''; ?>>
+                            In Order
+                        </option>
+                        <option value="Sold Out" <?php echo (isset($record['sell_status']) && $record['sell_status'] == 'Sold Out') ? 'selected' : ''; ?>>
+                            Sold Out
+                        </option>
                     </select>
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Delivery">ការដឹកជញ្ជូន:</label>
-                    <input type="text" name="Delivery" id="Delivery" class="form-control" required value="<?php echo isset($record['delivery_details']) ? $record['delivery_details'] : ''; ?>">
+                    <input type="text" name="Delivery" id="Delivery" class="form-control" required
+                           value="<?php echo isset($record['delivery_details']) ? $record['delivery_details'] : ''; ?>">
                 </div>
                 <div class="col-12 mt-3 p-2 justify-content-md-start">
-                    <button type="submit" name="btnsave" id="btnsave" class="btn  btn-primary mt-3 mb-3">រក្សាទុក</button>
-                    <button type="reset" name="btnreset" value="Clear" id="btnreset" class="btn btn-danger mt-3 mb-3">សម្អាត</button>
+                    <button type="submit" name="btnsave" id="btnsave" class="btn  btn-primary mt-3 mb-3">រក្សាទុក
+                    </button>
+                    <button type="reset" name="btnreset" value="Clear" id="btnreset" class="btn btn-danger mt-3 mb-3">
+                        សម្អាត
+                    </button>
                 </div>
             </form>
         </div>
@@ -211,12 +259,11 @@ if (isset($_GET['edit'])) {
     <!-- Display Table of Orders -->
 	<?php
 	// SQL query to retrieve all records from customer_orders table
-	$sql = "SELECT * FROM customer_orders";
+	$sql = "SELECT *, (quantity * price+ delivery_details) AS Total_money FROM customer_orders";
 	$result = $conn->query($sql);
-
 	if ($result->num_rows > 0) {
 		echo '<div class="table-responsive">';
-		echo '<table class="table table-striped table-hover table-custom border shadow">';
+		echo '<table class="table  table-striped table-hover table-custom border shadow">';
 		echo '<thead class="table-primary">';
 		echo '<tr>';
 		echo '<th scope="col">លេខរៀង</th>';
@@ -231,8 +278,10 @@ if (isset($_GET['edit'])) {
 		echo '<th scope="col">ស្ថានភាពបង់ប្រាក់</th>';
 		echo '<th scope="col">ស្ថានភាពលក់</th>';
 		echo '<th scope="col">ការដឹកជញ្ជូន</th>';
-		echo '<th scope="col">ចំណាំ</th>';
-		echo '<th scope="col">កំណត់ចំណាំ</th>';
+		echo '<th scope="col">សុរបទឹកប្រាក់</th>';
+
+		echo '<th scope="col">លុប</th>';
+		echo '<th scope="col">កែប្រែ</th>';
 		echo '</tr>';
 		echo '</thead>';
 		echo '<tbody>';
@@ -244,14 +293,16 @@ if (isset($_GET['edit'])) {
 			echo '<td>' . $row['name_customer'] . '</td>';
 			echo '<td>' . $row['phone_number'] . '</td>';
 			echo '<td>' . $row['quantity'] . '</td>';
-			echo '<td>' . $row['price'] . '</td>';
+			echo '<td>' . $row['price'] . '៛</td>';
 			echo '<td>' . $row['order_product'] . '</td>';
 			echo '<td>' . $row['location'] . '</td>';
 			echo '<td>' . $row['order_date'] . '</td>';
 			echo '<td>' . $row['take_date'] . '</td>';
 			echo '<td>' . $row['payment_status'] . '</td>';
 			echo '<td>' . $row['sell_status'] . '</td>';
-			echo '<td>' . $row['delivery_details'] . '</td>';
+			echo '<td>' . $row['delivery_details'] . '៛</td>';
+			echo '<td>' . $row['Total_money'] . '៛</td>';
+
 			echo '<td><a class=" btn btn-danger" href="?delete=' . $row['id'] . '">Delete</a></td>';
 			echo '<td><a class=" btn btn-warning" href="?edit=' . $row['id'] . '">Update</a></td>';
 			echo '</tr>';
@@ -260,7 +311,7 @@ if (isset($_GET['edit'])) {
 		echo '</table>';
 		echo '</div>'; // End table-responsive
 	} else {
-		echo '<p>No records found</p>';
+		echo '<p class="text-center text-success">គ្មានទិន្នន័យប្រចាំការសរុប</p>';
 	}
 
 	$conn->close();
@@ -271,12 +322,5 @@ if (isset($_GET['edit'])) {
 </html>
 
 <script>
-    function clearFormInputs() {
-        document.getElementById("record_form").reset();
-    }
-    // Call the clearFormInputs function on page load
-    window.onload = function() {
-        clearFormInputs();
-    };
-</script>
 
+</script>

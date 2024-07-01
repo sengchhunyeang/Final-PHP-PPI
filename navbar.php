@@ -212,12 +212,13 @@ if ($resultlocation->num_rows > 0) {
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="OrderDate">កាលបរិច្ឆេទបញ្ជា:</label>
                     <input type="date" name="OrderDate" id="OrderDate" class="form-control" required
-                           value="<?php echo isset($record['order_date']) ? $record['order_date'] : ''; ?>">
+                           value="<?php echo isset($record['order_date']) ? $record['order_date'] : date('Y-m-d'); ?>">
                 </div>
+
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="TakeDate">កាលបរិច្ឆេទទទួល:</label>
                     <input type="date" name="TakeDate" id="TakeDate" class="form-control" required
-                           value="<?php echo isset($record['take_date']) ? $record['take_date'] : ''; ?>">
+                           value="<?php echo isset($record['take_date']) ? $record['take_date'] : date('Y-m-d'); ?>">
                 </div>
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Payment">ស្ថានភាពបង់ប្រាក់:</label>
@@ -244,8 +245,10 @@ if ($resultlocation->num_rows > 0) {
                 <div class="col-sm-6 form-group">
                     <label class="form-label" for="Delivery">ការដឹកជញ្ជូន:</label>
                     <input type="text" name="Delivery" id="Delivery" class="form-control" required
+                           pattern="[0-9]+" title="ត្រូវតែជាលេខ"
                            value="<?php echo isset($record['delivery_details']) ? $record['delivery_details'] : ''; ?>">
                 </div>
+
                 <div class="col-12 mt-3 p-2 justify-content-md-start">
                     <button type="submit" name="btnsave" id="btnsave" class="btn  btn-primary mt-3 mb-3">រក្សាទុក
                     </button>
@@ -256,66 +259,89 @@ if ($resultlocation->num_rows > 0) {
             </form>
         </div>
     </div>
-    <!-- Display Table of Orders -->
 	<?php
 	// SQL query to retrieve all records from customer_orders table
-	$sql = "SELECT *, (quantity * price+ delivery_details) AS Total_money FROM customer_orders";
+	$sql = "SELECT *, (quantity * price + delivery_details) AS Total_money FROM customer_orders";
 	$result = $conn->query($sql);
 	if ($result->num_rows > 0) {
-		echo '<div class="table-responsive">';
-		echo '<table class="table  table-striped table-hover table-custom border shadow">';
-		echo '<thead class="table-primary">';
-		echo '<tr>';
-		echo '<th scope="col">លេខរៀង</th>';
-		echo '<th scope="col">ឈ្មោះអតិថិជន</th>';
-		echo '<th scope="col">លេខទូរស័ព្ទ</th>';
-		echo '<th scope="col">បរិមាណ</th>';
-		echo '<th scope="col">តម្លៃ</th>';
-		echo '<th scope="col">ផលិតផលកុម្មង់</th>';
-		echo '<th scope="col">ទីតាំង</th>';
-		echo '<th scope="col">កាលបរិច្ឆេទបញ្ជា</th>';
-		echo '<th scope="col">កាលបរិច្ឆេទទទួល</th>';
-		echo '<th scope="col">ស្ថានភាពបង់ប្រាក់</th>';
-		echo '<th scope="col">ស្ថានភាពលក់</th>';
-		echo '<th scope="col">ការដឹកជញ្ជូន</th>';
-		echo '<th scope="col">សុរបទឹកប្រាក់</th>';
+		echo '<div id="table" class="container card ft p-2  fs-5 table text-left table-hover">';
+		echo '<table class="table  w-100">';
 
-		echo '<th scope="col">លុប</th>';
-		echo '<th scope="col">កែប្រែ</th>';
-		echo '</tr>';
+		// Table header (thead)
+		echo '<thead>';
+
 		echo '</thead>';
+
+		// Table body (tbody)
 		echo '<tbody>';
-
-		// Output data of each row
 		while ($row = $result->fetch_assoc()) {
-			echo '<tr>';
-			echo '<td>' . $row['id'] . '</td>';
-			echo '<td>' . $row['name_customer'] . '</td>';
-			echo '<td>' . $row['phone_number'] . '</td>';
-			echo '<td>' . $row['quantity'] . '</td>';
-			echo '<td>' . $row['price'] . '៛</td>';
-			echo '<td>' . $row['order_product'] . '</td>';
-			echo '<td>' . $row['location'] . '</td>';
-			echo '<td>' . $row['order_date'] . '</td>';
-			echo '<td>' . $row['take_date'] . '</td>';
-			echo '<td>' . $row['payment_status'] . '</td>';
-			echo '<td>' . $row['sell_status'] . '</td>';
-			echo '<td>' . $row['delivery_details'] . '៛</td>';
-			echo '<td>' . $row['Total_money'] . '៛</td>';
+			$id = $row['id'];
+			$orderdate = $row['order_date'];
+			$takedate = $row['take_date'];
+			$customername = $row['name_customer'];
+			$phonenumber = $row['phone_number'];
+			$productname = $row['order_product'];
+			$quantity = $row['quantity'];
+			$price = $row['price'];
+			$delivery = $row['delivery_details'];
+			$totalprice = $row['Total_money'];
+			$payment = $row['payment_status'];
+			$sell = $row['sell_status'];
+			$location = $row['location'];
 
-			echo '<td><a class=" btn btn-danger" href="?delete=' . $row['id'] . '">Delete</a></td>';
-			echo '<td><a class=" btn btn-warning" href="?edit=' . $row['id'] . '">Update</a></td>';
+			// Table row (tr) for each order
+			echo '<tr class="">';
+			echo '<td class="text-left text-success ">' .'Order Date'. $orderdate . '</td>';
+			echo '<td class="text-left text-success">' .'TakeDate'. $takedate . '</td>';
+			echo '<td>
+                <a class="btn btn-danger" href="?delete=' . $id . '">Delete</a>
+                <a class="btn btn-warning" href="?edit=' . $id . '">Edit</a>
+                </td>';
+			echo '<td></td>'; // Empty column for spacing or additional actions
+			echo '</tr>';
+
+			// Additional rows for customer details, product information, etc.
+			echo '<tr>';
+			echo '<td class="text-left">Customer\'s Name: ' . $customername . '</td>';
+			echo '<td class="text-left">Phone Number: ' . $phonenumber . '</td>';
+			echo '<td class="text-left">Product\'s Name: ' . $productname . '</td>';
+			echo '<td></td>'; // Empty column for spacing or additional actions
+			echo '</tr>';
+
+			echo '<tr>';
+			echo '<td>Quantity: ' . $quantity . ' Kg</td>';
+			echo '<td>Price: ' . $price . ' Riel</td>';
+			echo '<td>Delivery: ' . $delivery . ' Riel</td>';
+			echo '<td></td>'; // Empty column for spacing or additional actions
+			echo '</tr>';
+
+			echo '<tr>';
+			echo '<td style="color:red">Total Price: ' . $totalprice . ' Riel</td>';
+			echo '<td style="color:red">Payment: ' . $payment . '</td>';
+			echo '<td style="color:red">Sell: ' . $sell . '</td>';
+			echo '<td></td>'; // Empty column for spacing or additional actions
+			echo '</tr>';
+
+			echo '<tr>';
+			echo '<td>Location: ' . $location . '</td>';
+			echo '<td></td>'; // Empty column for spacing or additional actions
+			echo '<td></td>'; // Empty column for spacing or additional actions
+			echo '<td></td>'; // Empty column for spacing or additional actions
 			echo '</tr>';
 		}
 		echo '</tbody>';
+
 		echo '</table>';
-		echo '</div>'; // End table-responsive
+		echo '</div>'; // End of table container
 	} else {
-		echo '<p class="text-center text-success">គ្មានទិន្នន័យប្រចាំការសរុប</p>';
+		echo '<p class="text-center text-success">មិនមានការកម្មង់ទេ</p>'; // No orders found message
 	}
 
 	$conn->close();
 	?>
+
+
+
 </div>
 <?php include_once('link-js.php'); ?>
 </body>
